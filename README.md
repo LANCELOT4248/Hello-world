@@ -81,4 +81,3 @@ Android 10 o superior.
 | [x] Hacer ejercicio     |  
 | (+) Agregar nueva tarea |  
 +-------------------------+  
-
