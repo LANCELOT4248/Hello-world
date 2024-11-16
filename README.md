@@ -37,7 +37,7 @@ Android 10 o superior.
 ### 3.2. Lenguaje y Herramientas  
 - Kotlin o Java para la programación.  
 - Android Studio como entorno de desarrollo.  
-- Firebase (opcional) para sincronización de tareas en la nube.
+- Firebase (por agregar) para sincronización de tareas en la nube.
 
 ---
 
@@ -47,8 +47,8 @@ Android 10 o superior.
 - Notificaciones push para recordatorios.  
 - Opciones de filtro (tareas completadas, pendientes, por prioridad).
 
-### 4.2. Interfaz de Administrador (opcional)  
-- Dashboard para gestionar usuarios (solo si añades una opción de registro).  
+### 4.2. Interfaz de Administrador (pendiente para revision de funcionalidad)  
+- Dashboard para gestionar usuarios   
 - Estadísticas básicas del uso de la app.
 
 ---
