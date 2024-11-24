@@ -17,8 +17,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.todopro.ui.theme.ToDoProTheme
@@ -46,6 +49,8 @@ fun TaskListScreen(optionTitle: String) {
         else -> emptyList()
     }
 
+    var newTaskTitle by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -55,15 +60,20 @@ fun TaskListScreen(optionTitle: String) {
         Text(text = optionTitle, style = MaterialTheme.typography.headlineMedium)
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            label = { Text("Título de la nueva tarea") },
+            value = newTaskTitle,
+            onValueChange = { newTaskTitle = it },
+            label = { Text("Nueva tarea") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(onClick = { /* Lógica para agregar tareas */ }) {
+        Button(onClick = {
+            if (newTaskTitle.isNotEmpty()) {
+                tasks.add(Task(newTaskTitle)) // Agrega la nueva tarea a la lista
+                newTaskTitle = "" // Limpia el campo de texto
+            }
+        }) {
             Text("Agregar Tarea")
         }
 
