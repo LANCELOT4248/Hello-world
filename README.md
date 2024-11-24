@@ -66,19 +66,11 @@ Android 10 o superior.
 
 ---
 
-## 6. Diseño (Wireframes o Esquemas de Página)  
+## 6. Diseño
 ### 6.1. Pantallas y Flujos  
 1. **Pantalla de Inicio:** Lista de tareas con botón flotante para añadir una nueva tarea.  
-2. **Pantalla de Nueva Tarea:** Formulario para ingresar el título, descripción y tiempo del recordatorio.  
+2. **Pantalla de Nueva Tarea:** Formulario para ingresar el descripción y tiempo del recordatorio.  
 3. **Pantalla de Notificaciones:** Recordatorios recibidos, con opción de marcar como completados.
 
-### 6.2. Ejemplo de Wireframe  
-+-------------------------+  
-|       ToDoPro           |  
-+-------------------------+  
-| [ ] Estudiar para examen|  
-| [ ] Comprar alimentos   |  
-| [x] Hacer ejercicio     |  
-| (+) Agregar nueva tarea |  
-+-------------------------+  
+
 
