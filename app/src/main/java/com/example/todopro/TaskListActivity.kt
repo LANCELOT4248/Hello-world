@@ -1,96 +1,184 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.todopro
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.example.todopro.database.TaskDatabase
+import com.example.todopro.database.TaskEntity
+import com.example.todopro.repository.TaskRepository
 import com.example.todopro.ui.theme.ToDoProTheme
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Alignment
+
 
 class TaskListActivity : ComponentActivity() {
+    private lateinit var repository: TaskRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val selectedOption = intent.getStringExtra("selectedOption") ?: "Tareas"
+        val taskDao = TaskDatabase.getDatabase(this).taskDao()
+        repository = TaskRepository(taskDao)
 
         setContent {
             ToDoProTheme {
-                TaskListScreen(selectedOption)
+                val navController = rememberNavController()
+                // Aquí se obtiene el parámetro 'selectedOption' de la navegación
+                val selectedOption = intent.getStringExtra("selectedOption") ?: "Tareas"
+                TaskListScreen(repository = repository, navController = navController, selectedOption = selectedOption)
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListScreen(optionTitle: String) {
-    val tasks = remember { mutableStateListOf<Task>() }
-    val commonTasks = when (optionTitle) {
+fun TaskListScreen(repository: TaskRepository, navController: NavHostController, selectedOption: String) {
+    val tasks by repository.allTasks.collectAsState(initial = emptyList())
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val notificationHelper = remember { NotificationHelper(context) }
+
+    // Obtener las tareas comunes
+    val commonTasks = when (selectedOption) {
         "Tareas de casa" -> listOf("Limpiar la casa", "Lavar los platos")
         "Pendientes del trabajo" -> listOf("Enviar informe", "Revisar correos")
         "Lista de compras" -> listOf("Comprar leche", "Comprar pan")
         else -> emptyList()
     }
 
-    var newTaskTitle by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(text = optionTitle, style = MaterialTheme.typography.headlineMedium)
-
-        OutlinedTextField(
-            value = newTaskTitle,
-            onValueChange = { newTaskTitle = it },
-            label = { Text("Nueva tarea") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(onClick = {
-            if (newTaskTitle.isNotEmpty()) {
-                tasks.add(Task(newTaskTitle)) // Agrega la nueva tarea a la lista
-                newTaskTitle = "" // Limpia el campo de texto
-            }
-        }) {
-            Text("Agregar Tarea")
-        }
-
-        Text(text = "Tareas Comunes", style = MaterialTheme.typography.titleMedium)
-
-        commonTasks.forEach { task ->
-            Button(onClick = {
-                tasks.add(Task(task))
-            }) {
-                Text(task)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Lista de Tareas") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.navigateUp() // Navega hacia atrás
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retroceder")
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            Button(
+                onClick = {
+                    val intent = Intent(context, TaskActivity::class.java)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Agregar tarea")
             }
         }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            // Mostrar Tareas comunes
+            if (commonTasks.isNotEmpty()) {
+                Text("Tareas comunes", style = MaterialTheme.typography.titleMedium)
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                    items(commonTasks) { taskTitle ->
+                        Button(
+                            onClick = {
+                                val intent = Intent(context, TaskActivity::class.java).apply {
+                                    putExtra("taskTitle", taskTitle)
+                                }
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(taskTitle)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(tasks) { task ->
-                Text(text = task.title, style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Mostrar Tareas específicas
+            Text("Tareas específicas", style = MaterialTheme.typography.titleMedium)
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(tasks) { task ->
+                    TaskListItem(
+                        task = task,
+                        onComplete = {
+                            coroutineScope.launch {
+                                repository.updateTask(task.copy(isCompleted = true))
+                                notificationHelper.sendImmediateNotification(
+                                    task.id,
+                                    "¡Tarea Completada!",
+                                    "Completaste: ${task.title}"
+                                )
+                            }
+                        },
+                        onDelete = {
+                            coroutineScope.launch {
+                                repository.deleteTask(task)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 }
+
+@Composable
+fun TaskListItem(
+    task: TaskEntity,
+    onComplete: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Row {
+                IconButton(onClick = onComplete) {
+                    Icon(Icons.Default.Check, contentDescription = "Completar")
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                }
+            }
+        }
+    }
+}
+
+
+
