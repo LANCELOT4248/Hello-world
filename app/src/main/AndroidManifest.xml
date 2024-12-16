@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permiso para notificaciones -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,6 +22,13 @@
         android:theme="@style/Theme.ToDoPro"
         tools:targetApi="31">
 
+        <!-- Receiver para manejar las notificaciones programadas -->
+        <receiver
+            android:name=".NotificationReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_STICKY" />
+
+        <!-- Actividades -->
         <activity
             android:name=".TaskActivity"
             android:exported="true"
@@ -39,3 +55,4 @@
     </application>
 
 </manifest>
+
